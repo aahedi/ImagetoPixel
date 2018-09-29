@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Image to Pixel dot by: Aahedi</title>
+<meta name='description' content='Convert Image to Pixel By Aahedi'>
+<meta name='author' content='Aahedi'>
+  <style>html,body{margin:0;padding:0;width:100%;}h1{text-align:center}
+  textarea,button,input,span{display:block;margin:auto;width:50%;}textarea{height:180px;resize:none;padding:10px;font-size:14px}
+  button{height:40px}
+  
+  *{
+			margin:0;	
+			padding:0;	
+		}
+		label{
+			font-family:Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-weight:bold;	
+			margin-left:1em;	
+		}
+		input{
+		border-radius:0.2em;
+		border:1px solid #3B3B3B;
+		padding:0.2em;
+		margin-top:1em;		
+		}
+		#bt{
+			width:5em;
+			margin-left:2em;		
+		}</style></head><body>
+    <body onload="start()">
+    <h1>Image to Pixel dot</h1>
+    	<form>
+        	<label for="file">Select image</label>
+        	<input id="file" type="file" placeholder="image source">
+            <label for="scale">Scale</label>
+        	<input id="scale" placeholder="1" value="5">
+            <label for="padding">Padding</label>
+        	<input id="padding" placeholder="5" value="5">
+            <input type="button" id="bt" onClick="rebuild()" value="Build">            
+        </form>
+    	<canvas id="canvas"></canvas>
+<script>
+var imageData = [];
+		var loaded = false;
+		var started = false;
+		var scale = 5;
+		var padding = 5;
+		var imageSorc = "http://i.imgur.com/oBBZQdT.jpg";
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+		function rebuild(){
+			scale =parseFloat( document.getElementById("scale").value);
+			padding = parseFloat(document.getElementById("padding").value);	
+			image = document.getElementById("file");
+			if(image.files[0] != undefined){
+				var reader = new FileReader();
+				reader.onload = function()
+				{
+					imageSorc = reader.result;
+					loaded = false;
+					started = false;
+					imageData = [];
+					start();
+				};
+				reader.readAsDataURL(image.files[0]);
+			}else{
+				start();
+			}
+		}
+		function loadImage(imageSrc)
+		{
+				var canvas = document.createElement("canvas");
+				var image = new Image();
+				var data;
+				image.src = imageSrc;	
+				image.crossOrigin = "Anonymous";
+				image.onload = function(){
+					canvas.width = image.width;
+					canvas.height = image.height;	
+					loaded = true;	
+					canvas.getContext("2d").drawImage(image,0,0,image.width,image.height);
+					data = canvas.getContext("2d").getImageData(0,0,image.width,image.height);
+					imageData = data;	
+				}
+				started = true;
+		}
+		function BAW(data){
+			var tempData = [];
+			for(var i = 0; i < data.length; i+= 4){
+				var BAW = (data[i] + data[i + 1] + data[i + 2]) / 3;
+				tempData.push(BAW);
+			}
+			return tempData;
+		}
+		function start(){
+			if(!started){
+				imageData = loadImage(imageSorc);
+			}
+			if(loaded){
+				ctx.clearRect(0,0,canvas.width,canvas.height);
+				var blackAndWhite = imageData;
+				var data = BAW(imageData.data);
+				drawDots(canvas,ctx, blackAndWhite,data, padding);
+				//ctx.putImageData(blackAndWhite,0,0);
+			}else{
+				setTimeout(start,100);	
+			}
+		}
+		function drawDots(canvas,ctx, image,data, spacing){
+			var j = 0;
+			var x = 0;
+			var o = 0;
+			var normalizedValue = 0;
+			canvas.width = (image.width/scale) * spacing;
+			canvas.height = (image.height/scale) * spacing;			
+			for(var i = 0; i < data.length; i+= scale){
+					//ctx.fillStyle = "#000";
+					//ctx.fillStyle = "#" + Math.floor(Math.abs(Math.sin(i))*16777215).toString(16);
+					x++;
+					if(i % (image.width*scale) == 0)
+					{
+						j++;
+						x = 0;
+					}
+					normalizedValue = 1 - (data[i]) / 255;
+					ctx.fillStyle = "rgba(0,0,0," + normalizedValue + ")";	
+					//console.log(normalizedValue);
+					//ctx.fillStyle  = "#" + Math.floor(Math.abs(Math.sin(i)*16777215)).toString(16);
+					ctx.fillRect(x * spacing,j * spacing,normalizedValue * spacing,normalizedValue*spacing);
+					//ctx.arc(x*spacing,j*spacing, 2, 0, Math.PI * 2);
+					//ctx.fill();
+			}
+		}
+</script>
+</body>
+</html>
